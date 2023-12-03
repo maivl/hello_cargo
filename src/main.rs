@@ -1,32 +1,40 @@
-use std::io;
-use std::cmp::Ordering;
-use rand::Rng;
+extern crate aes;
+extern crate block_modes;
 
-fn main() {
-    println!("Hello!");
-    
-    let secret_number = rand::thread_rng().gen_range(1..=100);
-    
-    loop {
-        println!("Guess the number! Please input your guess");
-        let mut guess = String::new();
-        io::stdin()
-        .read_line(&mut guess)
-        .expect("Failed to read line");
-        //shadowing lets us reuse the guess variable name rather than forcing us to 
-        // create two variables, such as guess_str and guess.
-        let guess: u32 = match guess.trim().parse() {
-            Ok(num) => num,
-            Err(_) => continue,
-        };
-        //The underscore, _, is a catchall value
-        match guess.cmp(&secret_number) {
-            Ordering::Less => println!("Too small!"),
-            Ordering::Greater => println!("Too big!"),
-            Ordering::Equal => {
-                println!("You win!");
-                break;
-            }
-        }
+use aes::Aes128;
+use block_modes::block_padding::Pkcs7;
+use block_modes::{BlockMode, Cfb};
+
+type AesCfb = Cfb<Aes128, Pkcs7>;
+
+#[no_mangle]
+pub extern "C" fn encrypt_data(data: *const u8, data_len: usize, key: *const u8, key_len: usize, result: *mut u8) {
+    // Convert the raw pointers to slices
+    let data = unsafe { std::slice::from_raw_parts(data, data_len) };
+    let key = unsafe { std::slice::from_raw_parts(key, key_len) };
+
+    // AES encryption logic here
+    let cipher = AesCfb::new_var(key, &[0u8; 16]).unwrap();
+    let ciphertext = cipher.encrypt_vec(data);
+
+    // Copy the encrypted data to the result pointer
+    unsafe {
+        std::ptr::copy(ciphertext.as_ptr(), result, ciphertext.len());
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn decrypt_data(data: *const u8, data_len: usize, key: *const u8, key_len: usize, result: *mut u8) {
+    // Convert the raw pointers to slices
+    let data = unsafe { std::slice::from_raw_parts(data, data_len) };
+    let key = unsafe { std::slice::from_raw_parts(key, key_len) };
+
+    // AES decryption logic here
+    let cipher = AesCfb::new_var(key, &[0u8; 16]).unwrap();
+    let plaintext = cipher.decrypt_vec(data);
+
+    // Copy the decrypted data to the result pointer
+    unsafe {
+        std::ptr::copy(plaintext.as_ptr(), result, plaintext.len());
     }
 }
