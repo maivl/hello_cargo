@@ -1,13 +1,17 @@
 {
     "name": "Rust with Node.js",
     "dockerFile": "Dockerfile",
-    "settings": {
-      "terminal.integrated.shell.linux": "/bin/bash"
+    "customizations": {
+      "vscode": {
+        "settings": {
+          "terminal.integrated.shell.linux": "/bin/bash",
+          "extensions": [
+            "rust-lang.rust",
+            "ms-vscode.node-debug2"
+          ]
+        }
+      }
     },
-    "extensions": [
-      "rust-lang.rust",
-      "ms-vscode.node-debug2"
-    ],
     "forwardPorts": [3000],
     "postCreateCommand": "npm install"
   }

@@ -11,4 +11,4 @@ WORKDIR /app
 COPY . .
 
 # Install Node.js dependencies
-RUN npm install
+RUN yarn install
