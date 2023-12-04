@@ -1,40 +1,38 @@
-extern crate aes;
-extern crate block_modes;
+use aes::cipher::{AsyncStreamCipher, KeyIvInit};
+use hex_literal::hex;
 
-use aes::Aes128;
-use block_modes::block_padding::Pkcs7;
-use block_modes::{BlockMode, Cfb};
+type Aes128CfbEnc = cfb_mode::Encryptor<aes::Aes128>;
+type Aes128CfbDec = cfb_mode::Decryptor<aes::Aes128>;
 
-type AesCfb = Cfb<Aes128, Pkcs7>;
 
-#[no_mangle]
-pub extern "C" fn encrypt_data(data: *const u8, data_len: usize, key: *const u8, key_len: usize, result: *mut u8) {
-    // Convert the raw pointers to slices
-    let data = unsafe { std::slice::from_raw_parts(data, data_len) };
-    let key = unsafe { std::slice::from_raw_parts(key, key_len) };
+pub fn main () {
 
-    // AES encryption logic here
-    let cipher = AesCfb::new_var(key, &[0u8; 16]).unwrap();
-    let ciphertext = cipher.encrypt_vec(data);
+    let key = [0x42; 16];
+    let iv = [0x24; 16];
+    let plaintext = *b"hello world! this is my plaintext.";
+    let ciphertext = hex!(
+        "3357121ebb5a29468bd861467596ce3d6f99e251cc2d9f0a598032ae386d0ab995b3"
+    );
 
-    // Copy the encrypted data to the result pointer
-    unsafe {
-        std::ptr::copy(ciphertext.as_ptr(), result, ciphertext.len());
-    }
-}
+    // encrypt/decrypt in-place
+    let mut buf = plaintext.to_vec();
+    Aes128CfbEnc::new(&key.into(), &iv.into()).encrypt(&mut buf);
+    assert_eq!(buf[..], ciphertext[..]);
 
-#[no_mangle]
-pub extern "C" fn decrypt_data(data: *const u8, data_len: usize, key: *const u8, key_len: usize, result: *mut u8) {
-    // Convert the raw pointers to slices
-    let data = unsafe { std::slice::from_raw_parts(data, data_len) };
-    let key = unsafe { std::slice::from_raw_parts(key, key_len) };
+    Aes128CfbDec::new(&key.into(), &iv.into()).decrypt(&mut buf);
+    assert_eq!(buf[..], plaintext[..]);
 
-    // AES decryption logic here
-    let cipher = AesCfb::new_var(key, &[0u8; 16]).unwrap();
-    let plaintext = cipher.decrypt_vec(data);
+    // encrypt/decrypt from buffer to buffer
+    // buffer length must be equal to input length
+    let mut buf1 = [0u8; 34];
+    Aes128CfbEnc::new(&key.into(), &iv.into())
+        .encrypt_b2b(&plaintext, &mut buf1)
+        .unwrap();
+    assert_eq!(buf1[..], ciphertext[..]);
 
-    // Copy the decrypted data to the result pointer
-    unsafe {
-        std::ptr::copy(plaintext.as_ptr(), result, plaintext.len());
-    }
+    let mut buf2 = [0u8; 34];
+    Aes128CfbDec::new(&key.into(), &iv.into())
+        .decrypt_b2b(&buf1, &mut buf2)
+        .unwrap();
+    assert_eq!(buf2[..], plaintext[..]);
 }
