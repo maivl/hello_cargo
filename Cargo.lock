@@ -14,6 +14,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrayref"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b4930d2cb77ce62f89ee5d5289b4ac049559b1c45539271f5ed4fdc7db34545"
+
+[[package]]
 name = "bumpalo"
 version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -152,6 +158,7 @@ name = "wasm-aeslib"
 version = "0.1.8"
 dependencies = [
  "aes",
+ "arrayref",
  "cfb-mode",
  "wasm-bindgen",
 ]
