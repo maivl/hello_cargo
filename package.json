@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "private": "true",
   "scripts": {
-    "build:wasm": "rimraf dist && wasm-pack build --out-dir dist --out-name index"
+    "build:wasm": "rimraf dist && wasm-pack build --out-dir dist --out-name index --target web"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",
